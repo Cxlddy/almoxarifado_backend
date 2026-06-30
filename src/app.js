@@ -16,7 +16,7 @@ const app = express();
 
 app.use(cors({
   origin: [
-    'https://Cxlddy.github.io'
+    'https://cxlddy.github.io/'
   ]
 }));
 app.use(express.json());
