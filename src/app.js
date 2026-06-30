@@ -16,8 +16,13 @@ const app = express();
 
 app.use(cors({
   origin: [
-    'https://cxlddy.github.io/'
-  ]
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5000',
+    'https://cxlddy.github.io'
+  ],
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
