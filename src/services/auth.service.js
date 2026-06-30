@@ -1,10 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import supabase from '../database/supabase.js';
 
-const supabaseAuth = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('SUPABASE_URL e SUPABASE_ANON_KEY são obrigatórias');
+}
+
+const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
 
 async function login(email, senha) {
   const { data: loginData, error: loginError } =
@@ -75,10 +79,7 @@ async function forgotPassword(email) {
 }
 
 async function resetPassword({ access_token, refresh_token, senha }) {
-  const supabaseRecovery = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY
-  );
+  const supabaseRecovery = createClient(supabaseUrl, supabaseAnonKey);
 
   const { error: sessionError } = await supabaseRecovery.auth.setSession({
     access_token,
