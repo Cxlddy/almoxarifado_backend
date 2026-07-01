@@ -7,7 +7,7 @@ const router = express.Router();
 router.get(
   '/',
   autenticarUsuario,
-  autorizarPerfis('admin'),
+  autorizarPerfis('admin', 'usuario'),
   solicitacoesController.listarSolicitacoes
 );
 

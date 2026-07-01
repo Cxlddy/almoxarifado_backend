@@ -5,7 +5,6 @@ async function criarMovimentacao(req, res) {
     const {
       produto_id,
       local_estoque_id,
-      usuario_id,
       fornecedor_id,
       tipo,
       origem,
@@ -35,7 +34,7 @@ async function criarMovimentacao(req, res) {
     const movimentacao = await movimentacoesService.criarMovimentacao({
       produto_id,
       local_estoque_id,
-      usuario_id,
+      usuario_id: req.usuario.id,
       fornecedor_id,
       tipo,
       origem: origem || 'manual',

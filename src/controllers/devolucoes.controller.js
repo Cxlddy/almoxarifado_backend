@@ -1,5 +1,9 @@
 import devolucoesService from '../services/devolucoes.service.js';
 
+function tokenValido(token) {
+  return /^[A-Za-z0-9_-]{8,128}$/.test(token || '');
+}
+
 function paginaConfirmacao({ tipo, token, titulo, mensagem }) {
   const action = tipo === 'confirmar'
     ? `/devolucoes/confirmar/${token}`
@@ -203,7 +207,7 @@ function paginaResultado({ tipo, titulo, mensagem }) {
 
 async function listarEmprestimosPendentes(req, res) {
   try {
-    const emprestimos = await devolucoesService.listarEmprestimosPendentes();
+    const emprestimos = await devolucoesService.listarEmprestimosPendentes(req.usuario);
     return res.status(200).json(emprestimos);
   } catch (error) {
     return res.status(500).json({
@@ -215,7 +219,7 @@ async function listarEmprestimosPendentes(req, res) {
 
 async function solicitarDevolucao(req, res) {
   try {
-    const devolucao = await devolucoesService.solicitarDevolucao(req.body);
+    const devolucao = await devolucoesService.solicitarDevolucao(req.body, req.usuario);
     return res.status(201).json(devolucao);
   } catch (error) {
     return res.status(500).json({
@@ -226,6 +230,16 @@ async function solicitarDevolucao(req, res) {
 }
 
 async function telaConfirmar(req, res) {
+  if (!tokenValido(req.params.token)) {
+    return res.status(400).send(
+      paginaResultado({
+        tipo: 'erro',
+        titulo: 'Link inválido',
+        mensagem: 'Esse link de devolução não é válido.'
+      })
+    );
+  }
+
   return res.send(
     paginaConfirmacao({
       tipo: 'confirmar',
@@ -237,6 +251,16 @@ async function telaConfirmar(req, res) {
 }
 
 async function telaNegar(req, res) {
+  if (!tokenValido(req.params.token)) {
+    return res.status(400).send(
+      paginaResultado({
+        tipo: 'erro',
+        titulo: 'Link inválido',
+        mensagem: 'Esse link de devolução não é válido.'
+      })
+    );
+  }
+
   return res.send(
     paginaConfirmacao({
       tipo: 'negar',

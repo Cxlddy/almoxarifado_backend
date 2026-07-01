@@ -3,11 +3,11 @@ import supabase from '../database/supabase.js';
 import whatsappService from './whatsapp.service.js';
 
 function gerarTokenCurto() {
-  return crypto.randomBytes(9).toString('base64url');
+  return crypto.randomBytes(16).toString('base64url');
 }
 
-async function listarEmprestimosPendentes() {
-  const { data: itens, error: erroItens } = await supabase
+async function listarEmprestimosPendentes(usuario) {
+  let query = supabase
     .from('solicitacao_itens')
     .select(`
       id,
@@ -22,6 +22,7 @@ async function listarEmprestimosPendentes() {
       ),
       solicitacoes (
         id,
+        solicitante_id,
         status,
         justificativa,
         data_solicitacao,
@@ -33,6 +34,8 @@ async function listarEmprestimosPendentes() {
       )
     `)
     .gt('quantidade_atendida', 0);
+
+  const { data: itens, error: erroItens } = await query;
 
   if (erroItens) {
     throw new Error(erroItens.message);
@@ -80,14 +83,14 @@ async function listarEmprestimosPendentes() {
         observacao: item.observacao
       };
     })
+    .filter((item) => usuario?.perfil === 'admin' || item.solicitacao?.solicitante_id === usuario?.id)
     .filter((item) => item.quantidade_pendente_devolucao > 0);
 }
 
-async function solicitarDevolucao(dados) {
+async function solicitarDevolucao(dados, usuario) {
   const {
     solicitacao_item_id,
     local_estoque_id,
-    solicitado_por_id,
     quantidade,
     observacao
   } = dados;
@@ -118,6 +121,7 @@ async function solicitarDevolucao(dados) {
       ),
       solicitacoes (
         id,
+        solicitante_id,
         justificativa,
         usuarios:solicitante_id (
           id,
@@ -131,6 +135,10 @@ async function solicitarDevolucao(dados) {
 
   if (erroItem) {
     throw new Error(erroItem.message);
+  }
+
+  if (usuario?.perfil !== 'admin' && item.solicitacoes?.solicitante_id !== usuario?.id) {
+    throw new Error('Você só pode solicitar devolução dos seus próprios empréstimos');
   }
 
   const quantidadeAtendida = Number(item.quantidade_atendida || 0);
@@ -186,7 +194,7 @@ async function solicitarDevolucao(dados) {
       solicitacao_item_id: item.id,
       produto_id: item.produto_id,
       local_estoque_id,
-      solicitado_por_id: solicitado_por_id || null,
+      solicitado_por_id: usuario?.id || null,
       quantidade: Number(quantidade),
       observacao: observacao || null,
       token_confirmacao: tokenConfirmacao,
@@ -260,6 +268,21 @@ async function buscarDevolucaoPendentePorToken(campo, token) {
 async function confirmarDevolucao(token) {
   const devolucao = await buscarDevolucaoPendentePorToken('token_confirmacao', token);
 
+  const { data: devolucaoConfirmada, error: erroConfirmacao } = await supabase
+    .from('devolucoes_emprestimos')
+    .update({
+      status: 'confirmada',
+      respondido_em: new Date().toISOString()
+    })
+    .eq('id', devolucao.id)
+    .eq('status', 'pendente')
+    .select()
+    .single();
+
+  if (erroConfirmacao || !devolucaoConfirmada) {
+    throw new Error('Esta devolução já foi respondida');
+  }
+
   const { data: movimentacao, error: erroMovimentacao } = await supabase
     .from('movimentacoes_estoque')
     .insert([{
@@ -277,13 +300,20 @@ async function confirmarDevolucao(token) {
     .single();
 
   if (erroMovimentacao) {
+    await supabase
+      .from('devolucoes_emprestimos')
+      .update({
+        status: 'pendente',
+        respondido_em: null
+      })
+      .eq('id', devolucao.id);
+
     throw new Error(erroMovimentacao.message);
   }
 
   const { data, error } = await supabase
     .from('devolucoes_emprestimos')
     .update({
-      status: 'confirmada',
       movimentacao_id: movimentacao.id,
       respondido_em: new Date().toISOString()
     })

@@ -1,7 +1,11 @@
 import express from 'express';
 import usuariosController from '../controllers/usuarios.controller.js';
+import { autenticarUsuario, autorizarPerfis } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
+
+router.use(autenticarUsuario);
+router.use(autorizarPerfis('admin'));
 
 router.get('/', usuariosController.listarUsuarios);
 router.post('/', usuariosController.criarUsuario);

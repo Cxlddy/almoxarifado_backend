@@ -2,7 +2,7 @@ import supabase from '../database/supabase.js';
 
 async function autenticarUsuario(req, res, next) {
   try {
-    if (process.env.AUTH_DESABILITADA === 'true') {
+    if (process.env.AUTH_DESABILITADA === 'true' && process.env.NODE_ENV !== 'production') {
       req.usuario = {
         id: null,
         nome: 'Desenvolvimento',
@@ -20,7 +20,13 @@ async function autenticarUsuario(req, res, next) {
       });
     }
 
-    const token = authHeader.replace('Bearer ', '');
+    const [tipo, token] = authHeader.split(' ');
+
+    if (tipo !== 'Bearer' || !token) {
+      return res.status(401).json({
+        mensagem: 'Formato do token inválido'
+      });
+    }
 
     const { data: authData, error: authError } = await supabase.auth.getUser(token);
 
@@ -43,7 +49,10 @@ async function autenticarUsuario(req, res, next) {
       });
     }
 
-    req.usuario = usuario;
+    req.usuario = {
+      ...usuario,
+      auth_id: authData.user.id
+    };
 
     return next();
   } catch (error) {

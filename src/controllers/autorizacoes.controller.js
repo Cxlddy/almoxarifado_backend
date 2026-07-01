@@ -1,5 +1,9 @@
 import autorizacoesService from '../services/autorizacoes.service.js';
 
+function tokenValido(token) {
+  return /^[A-Za-z0-9_-]{8,128}$/.test(token || '');
+}
+
 function paginaConfirmacao({ titulo, texto, action, botao, cor }) {
   return `
     <!DOCTYPE html>
@@ -235,6 +239,14 @@ function paginaResultadoAutorizacao({ tipo, titulo, mensagem, detalhe }) {
 function telaAprovar(req, res) {
   const { token } = req.params;
 
+  if (!tokenValido(token)) {
+    return res.status(400).send(paginaResultadoAutorizacao({
+      tipo: 'erro',
+      titulo: 'Link inválido',
+      mensagem: 'Esse link de autorização não é válido.'
+    }));
+  }
+
   return res.send(
     paginaConfirmacao({
       titulo: 'Confirmar autorização',
@@ -248,6 +260,14 @@ function telaAprovar(req, res) {
 
 function telaNegar(req, res) {
   const { token } = req.params;
+
+  if (!tokenValido(token)) {
+    return res.status(400).send(paginaResultadoAutorizacao({
+      tipo: 'erro',
+      titulo: 'Link inválido',
+      mensagem: 'Esse link de autorização não é válido.'
+    }));
+  }
 
   return res.send(
     paginaConfirmacao({

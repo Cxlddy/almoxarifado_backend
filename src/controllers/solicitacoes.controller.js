@@ -2,7 +2,7 @@ import solicitacoesService from '../services/solicitacoes.service.js';
 
 async function listarSolicitacoes(req, res) {
   try {
-    const solicitacoes = await solicitacoesService.listarSolicitacoes();
+    const solicitacoes = await solicitacoesService.listarSolicitacoes(req.usuario);
     return res.status(200).json(solicitacoes);
   } catch (error) {
     return res.status(500).json({
@@ -15,7 +15,6 @@ async function listarSolicitacoes(req, res) {
 async function criarSolicitacao(req, res) {
   try {
     const {
-      solicitante_id,
       setor_id,
       centro_custo_id,
       justificativa,
@@ -31,7 +30,7 @@ async function criarSolicitacao(req, res) {
 
     const solicitacao = await solicitacoesService.criarSolicitacao(
       {
-        solicitante_id,
+        solicitante_id: req.usuario.id,
         setor_id,
         centro_custo_id,
         justificativa,
@@ -53,7 +52,7 @@ async function criarSolicitacao(req, res) {
 async function atenderSolicitacao(req, res) {
   try {
     const { id } = req.params;
-    const { local_estoque_id, usuario_id } = req.body;
+    const { local_estoque_id } = req.body;
 
     if (!local_estoque_id) {
       return res.status(400).json({
@@ -64,7 +63,7 @@ async function atenderSolicitacao(req, res) {
     const solicitacao = await solicitacoesService.atenderSolicitacao({
       solicitacao_id: id,
       local_estoque_id,
-      usuario_id
+      usuario_id: req.usuario.id
     });
 
     return res.status(200).json(solicitacao);

@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import supabase from '../database/supabase.js';
 
 function gerarTokenCurto() {
-  return crypto.randomBytes(6).toString('base64url');
+  return crypto.randomBytes(16).toString('base64url');
 }
 
 async function criarAutorizacao({
@@ -61,6 +61,21 @@ async function responderAutorizacao(token, resposta) {
   const novoStatusSolicitacao =
     resposta === 'aprovada' ? 'aprovada' : 'recusada';
 
+  const { data: autorizacaoRespondida, error: erroResposta } = await supabase
+    .from('autorizacoes_solicitacao')
+    .update({
+      status: resposta,
+      respondido_em: new Date().toISOString()
+    })
+    .eq('id', autorizacao.id)
+    .eq('status', 'pendente')
+    .select()
+    .single();
+
+  if (erroResposta || !autorizacaoRespondida) {
+    throw new Error('Autorização inválida ou já respondida');
+  }
+
   const { error: erroSolicitacao } = await supabase
     .from('solicitacoes')
     .update({
@@ -71,24 +86,18 @@ async function responderAutorizacao(token, resposta) {
     .eq('id', autorizacao.solicitacao_id);
 
   if (erroSolicitacao) {
+    await supabase
+      .from('autorizacoes_solicitacao')
+      .update({
+        status: 'pendente',
+        respondido_em: null
+      })
+      .eq('id', autorizacao.id);
+
     throw new Error(erroSolicitacao.message);
   }
 
-  const { data, error } = await supabase
-    .from('autorizacoes_solicitacao')
-    .update({
-      status: resposta,
-      respondido_em: new Date().toISOString()
-    })
-    .eq('id', autorizacao.id)
-    .select()
-    .single();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
+  return autorizacaoRespondida;
 }
 
 export default {

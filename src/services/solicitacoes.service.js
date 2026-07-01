@@ -2,8 +2,8 @@ import supabase from '../database/supabase.js';
 import autorizacoesService from './autorizacoes.service.js';
 import whatsappService from './whatsapp.service.js';
 
-async function listarSolicitacoes() {
-  const { data, error } = await supabase
+async function listarSolicitacoes(usuario) {
+  let query = supabase
     .from('solicitacoes')
     .select(`
       id,
@@ -39,6 +39,12 @@ async function listarSolicitacoes() {
       )
     `)
     .order('data_solicitacao', { ascending: false });
+
+  if (usuario?.perfil !== 'admin') {
+    query = query.eq('solicitante_id', usuario.id);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw new Error(error.message);

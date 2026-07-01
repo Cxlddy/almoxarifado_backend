@@ -4,11 +4,11 @@ import { autenticarUsuario, autorizarPerfis } from '../middlewares/auth.middlewa
 
 const router = express.Router();
 
-router.get('/setores', cadastrosController.listarSetores);
-router.get('/centros-custo', cadastrosController.listarCentrosCusto);
-router.get('/locais-estoque', cadastrosController.listarLocaisEstoque);
-router.get('/fornecedores', cadastrosController.listarFornecedores);
-router.get('/unidades-medida', cadastrosController.listarUnidadesMedida);
+router.get('/setores', autenticarUsuario, autorizarPerfis('admin', 'usuario'), cadastrosController.listarSetores);
+router.get('/centros-custo', autenticarUsuario, autorizarPerfis('admin', 'usuario'), cadastrosController.listarCentrosCusto);
+router.get('/locais-estoque', autenticarUsuario, autorizarPerfis('admin', 'usuario'), cadastrosController.listarLocaisEstoque);
+router.get('/fornecedores', autenticarUsuario, autorizarPerfis('admin'), cadastrosController.listarFornecedores);
+router.get('/unidades-medida', autenticarUsuario, autorizarPerfis('admin', 'usuario'), cadastrosController.listarUnidadesMedida);
 
 router.post(
   '/setores',

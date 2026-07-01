@@ -1,16 +1,14 @@
 import express from 'express';
-import produtosController from '../controllers/produtos.controller.js';
+import saldoEstoqueController from '../controllers/saldoEstoque.controller.js';
 import { autenticarUsuario, autorizarPerfis } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
-router.get('/', produtosController.listarProdutos);
-
-router.post(
+router.get(
   '/',
   autenticarUsuario,
-  autorizarPerfis('admin'),
-  produtosController.criarProduto
+  autorizarPerfis('admin', 'usuario'),
+  saldoEstoqueController.listarSaldoEstoque
 );
 
 export default router;
