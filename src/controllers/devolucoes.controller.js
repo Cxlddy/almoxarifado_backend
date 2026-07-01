@@ -259,6 +259,8 @@ async function confirmarDevolucao(req, res) {
       })
     );
   } catch (error) {
+    console.error('Erro ao confirmar devolução:', error.message);
+
     return res.status(400).send(
       paginaResultado({
         tipo: 'erro',
@@ -281,6 +283,8 @@ async function negarDevolucao(req, res) {
       })
     );
   } catch (error) {
+    console.error('Erro ao negar devolução:', error.message);
+
     return res.status(400).send(
       paginaResultado({
         tipo: 'erro',

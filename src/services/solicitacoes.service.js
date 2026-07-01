@@ -74,7 +74,11 @@ async function criarSolicitacao(dadosSolicitacao, itens) {
     throw new Error(erroItens.message);
   }
 
-  await enviarAutorizacaoParaAlmoxarife(solicitacao);
+  try {
+    await enviarAutorizacaoParaAlmoxarife(solicitacao);
+  } catch (error) {
+    console.error('Erro ao enviar autorização por Whatsapp: ', error.message);
+  }
 
   return {
     ...solicitacao,
